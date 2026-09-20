@@ -3,6 +3,7 @@
 #include <random>
 #include <vector>
 #include <cstring>
+#include <stdexcept>
 #include <pthread.h>
 
 bool isInside(double x, double y, double r)
@@ -50,6 +51,21 @@ void* threadFunc(void* data)
 
 double area(double r, size_t threads, size_t tests)
 {
+  if (r <= 0.0)
+  {
+    throw std::invalid_argument("Circle radius must be positive");
+  }
+
+  if (threads == 0)
+  {
+    throw std::invalid_argument("Thread count must be positive");
+  }
+
+  if (tests == 0)
+  {
+    throw std::invalid_argument("Test count must be positive");
+  }
+
   size_t partSize = tests / threads;
 
   std::vector< pthread_t > th(threads);

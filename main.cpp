@@ -3,7 +3,6 @@
 #include <random>
 #include <vector>
 #include <cstring>
-#include <stdexcept>
 #include <pthread.h>
 
 bool isInside(double x, double y, double r)
@@ -53,17 +52,20 @@ double area(double r, size_t threads, size_t tests)
 {
   if (r <= 0.0)
   {
-    throw std::invalid_argument("Circle radius must be positive");
+    std::cerr << "Circle radius must be positive\n";
+    return -1.0;
   }
 
   if (threads == 0)
   {
-    throw std::invalid_argument("Thread count must be positive");
+    std::cerr << "Threads count must be positive\n";
+    return -1.0;
   }
 
   if (tests == 0)
   {
-    throw std::invalid_argument("Test count must be positive");
+     std::cerr << "Tests count must be positive\n";
+    return -1.0;
   }
 
   size_t partSize = tests / threads;
@@ -83,6 +85,7 @@ double area(double r, size_t threads, size_t tests)
     int err = pthread_create(&th[i], nullptr, threadFunc, &threadData[i]);
     if (err)
     {
+      std::cerr << std::strerror(err) << '\n';
       createError = err;
       break;
     }
@@ -99,6 +102,7 @@ double area(double r, size_t threads, size_t tests)
     int err = pthread_join(th[i], reinterpret_cast< void** >(&result));
     if (err)
     {
+      std::cerr << std::strerror(err) << '\n';
       joinError = err;
     }
     else
@@ -107,14 +111,9 @@ double area(double r, size_t threads, size_t tests)
     }
   }
 
-  if (createError)
+  if (createError || joinError)
   {
-    throw std::runtime_error(strerror(createError));
-  }
-
-  if (joinError)
-  {
-    throw std::runtime_error(strerror(joinError));
+    return -1.0;
   }
 
   return (4.0 * r * r * total) / tests;

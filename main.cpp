@@ -71,6 +71,9 @@ double area(double r, size_t threads, size_t tests)
   std::vector< pthread_t > th(threads);
   std::vector< Thread > threadData(threads);
 
+  size_t created = 0;
+  int createError = 0;
+
   for (size_t i = 0; i < threads; ++i)
   {
     threadData[i].seed = i + 1;
@@ -80,23 +83,38 @@ double area(double r, size_t threads, size_t tests)
     int err = pthread_create(&th[i], nullptr, threadFunc, &threadData[i]);
     if (err)
     {
-      std::cerr << strerror(err) << '\n';
+      createError = err;
+      break;
     }
+    ++created;
   }
 
   size_t total = 0;
+  int joinError = 0;
 
-  for (size_t i = 0; i < threads; ++i)
+  for (size_t i = 0; i < created; ++i)
   {
     size_t result = 0;
 
     int err = pthread_join(th[i], reinterpret_cast< void** >(&result));
     if (err)
     {
-      std::cerr << strerror(err) << '\n';
+      joinError = err;
     }
+    else
+    {
+      total += result;
+    }
+  }
 
-    total += result;
+  if (createError)
+  {
+    throw std::runtime_error(strerror(createError));
+  }
+
+  if (joinError)
+  {
+    throw std::runtime_error(strerror(joinError));
   }
 
   return (4.0 * r * r * total) / tests;

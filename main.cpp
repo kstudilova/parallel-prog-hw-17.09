@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstddef>
 #include <random>
+#include <vector>
+#include <cstring>
+#include <pthread.h>
 
 bool isInside(double x, double y, double r)
 {
@@ -27,6 +30,60 @@ size_t calc(double r, size_t tests, size_t seed)
     }
   }
   return count;
+}
+
+struct Thread
+{
+  double r;
+  size_t tests;
+  size_t seed;
+};
+
+void* threadFunc(void* data)
+{
+  Thread* thread = static_cast< Thread* >(data);
+
+  size_t res = calc(thread->r, thread->tests, thread->seed);
+
+  return reinterpret_cast< void* >(res);
+}
+
+double area(double r, size_t threads, size_t tests)
+{
+  size_t partSize = tests / threads;
+
+  std::vector< pthread_t > th(threads);
+  std::vector< Thread > threadData(threads);
+
+  for (size_t i = 0; i < threads; ++i)
+  {
+    threadData[i].seed = i + 1;
+    threadData[i].r = r;
+    threadData[i].tests = (i == threads - 1) ? partSize + (tests % threads) : partSize;
+
+    int err = pthread_create(&th[i], nullptr, threadFunc, &threadData[i]);
+    if (err)
+    {
+      std::cerr << strerror(err) << '\n';
+    }
+  }
+
+  size_t total = 0;
+
+  for (size_t i = 0; i < threads; ++i)
+  {
+    size_t result = 0;
+
+    int err = pthread_join(th[i], reinterpret_cast< void** >(&result));
+    if (err)
+    {
+      std::cerr << strerror(err) << '\n';
+    }
+
+    total += result;
+  }
+
+  return (4.0 * r * r * total) / tests;
 }
 
 int main()

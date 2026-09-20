@@ -64,7 +64,7 @@ double area(double r, size_t threads, size_t tests)
 
   if (tests == 0)
   {
-     std::cerr << "Tests count must be positive\n";
+    std::cerr << "Tests count must be positive\n";
     return -1.0;
   }
 
@@ -121,5 +121,17 @@ double area(double r, size_t threads, size_t tests)
 
 int main()
 {
+  double r = 3.0;
+  size_t threads = 8;
+  size_t tests = 1'000'000;
+
+  double result = area(r, threads, tests);
+
+  if (result < 0)
+  {
+    return 1;
+  }
+
+  std::cout << result << '\n';
   return 0;
 }
